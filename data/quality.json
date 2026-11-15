@@ -1,0 +1,39 @@
+{
+  "flag_counts": {
+    "Fila idéntica en fuente; conservada": 2549,
+    "Posible coincidencia entre fuentes": 45,
+    "Emisión posterior a negociación": 10,
+    "Vencimiento anterior a negociación": 12,
+    "Efectivo no coincide con nominal × precio": 198,
+    "Fecha emisión inválida en fuente: 1+": 1
+  },
+  "possible_overlap_groups": 19,
+  "excluded_policy": "No se suman canales automáticamente; filas idénticas se conservan sin identificador de operación.",
+  "excluded": [
+    {
+      "source": "negociaciones-sector-publico.xlsx",
+      "sheet": "Rep bolsas hist reporto (bonos)",
+      "row": 12,
+      "date": "2025-10-24",
+      "amount": 500000000.0,
+      "reason": "Reporto"
+    },
+    {
+      "source": "negociaciones-sector-publico.xlsx",
+      "sheet": "Reporte bolsas hist BANECUADOR",
+      "row": 12,
+      "date": "2024-01-01",
+      "amount": 15000000.0,
+      "reason": "Certificado de inversión BanEcuador"
+    },
+    {
+      "source": "negociaciones-sector-publico.xlsx",
+      "sheet": "Reporte bolsas hist BANECUADOR",
+      "row": 13,
+      "date": "2024-03-07",
+      "amount": 10000000.0,
+      "reason": "Certificado de inversión BanEcuador"
+    }
+  ],
+  "archived_sheets": []
+}
