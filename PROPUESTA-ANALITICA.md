@@ -16,7 +16,7 @@ La segunda versión organiza la información alrededor de preguntas económicas.
 | ¿Qué tasa se observa para cada plazo? | Dispersión de operaciones y curva descriptiva por tramos | Plazo residual, una medida de tasa, un instrumento y un canal a la vez |
 | ¿Dónde subieron o bajaron las tasas? | Cambio de tasa por tramo en puntos básicos | Ventanas consecutivas de 30, 90 o 180 días; ≥ 3 registros en cada ventana |
 | ¿Es un cambio persistente? | Historia mensual de tasas por plazo y mapa de calor mes × plazo | No unir meses ausentes; ≥ 3 registros por celda, sin imputar tasas |
-| ¿Se está alargando o acortando la estructura? | Distribución mensual del nominal por tramo residual y plazo ponderado | Perfil de las operaciones, no calendario de amortización ni saldo vivo |
+| ¿Se está alargando o acortando la estructura? | Distribución mensual del nominal por tramo residual | Perfil de las operaciones, no calendario de amortización ni saldo vivo |
 | ¿Qué emisiones concentran la actividad? | Ranking del nominal por texto de decreto | No se fusionan automáticamente variantes de un decreto ni se infieren tenedores |
 | ¿Qué entidades destacan en los reportes públicos? | Barras por entidad con Quito/Guayaquil y participación de las tres mayores | Universo separado, corte propio, no sumar con colocaciones |
 
@@ -42,8 +42,6 @@ Para el seguimiento solicitado, CETES / Notas del Tesoro constituye una única f
 
 Una ventana de N días incluye `corte − N + 1` a `corte`. La anterior incluye los N días inmediatamente anteriores, sin solapamiento. Son días calendario, no ruedas bursátiles. La fecha fuente puede ser anterior a la fecha de consulta.
 
-Los indicadores anuales suman del 1 de enero al corte. La variación interanual compara con el mismo día del año anterior y, si el año base comienza con cobertura parcial, ajusta también el inicio del año actual al mismo mes y día. El tooltip de la tarjeta muestra las ventanas exactas. Si no hay base positiva no se calcula variación.
-
 El acumulado de cada año se detiene en el mismo mes y día del corte elegido. Los años que empiezan tarde deben leerse con la advertencia de inicio parcial que aparece en el gráfico. No se extiende el último valor a meses futuros.
 
 ### Tasas, plazos y curvas
@@ -57,7 +55,6 @@ El acumulado de cada año se detiene en el mismo mes y día del corte elegido. L
 - En la curva, cada punto agregado se ubica en su **plazo medio observado**, no en un vencimiento teórico inventado. Se conecta sólo si el tramo y su vecino tienen ≥ 3 registros. Las operaciones individuales permanecen visibles y su tamaño se relaciona con nominal mediante raíz cuadrada, con tamaño mínimo de legibilidad.
 - Los tramos de una o dos observaciones aparecen como puntos aislados. El cambio en puntos básicos y las series mensuales por tramo requieren ≥ 3 observaciones por grupo. El umbral controla la visualización, no establece significancia estadística.
 - Cada tramo muestra nominal, registros, días con actividad y porcentaje del registro mayor. Una curva respaldada por muchas filas idénticas no se interpreta automáticamente como una muestra independiente.
-- Las tarjetas de tasa y plazo reciente muestran medias disponibles incluso con muestra pequeña, acompañadas del conteo; las curvas aplican el umbral anterior.
 - `cambio_pb = (tasa_actual_pct − tasa_anterior_pct) × 100`. No se califica la subida o bajada como beneficio o pérdida para un inversionista.
 
 ### Estructura e instituciones

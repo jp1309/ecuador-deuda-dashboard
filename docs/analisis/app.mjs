@@ -1,7 +1,7 @@
-import {analyze,sum,weighted,NAMES} from './analytics.mjs';
+import {analyze,NAMES} from './analytics.mjs';
 const $=id=>document.getElementById(id),F=new Intl.NumberFormat('es-EC',{maximumFractionDigits:2}),I=new Intl.NumberFormat('es-EC',{maximumFractionDigits:0});
 // Stable categorical colors shared by maturity histories, composition and legends.
-const C={teal:'#007f73',amber:'#d55e00',navy:'#7751a8',muted:'#697580',red:'#b83b72',grid:'#edf1f4'},palette=['#007f73','#d55e00','#7751a8','#0072b2','#b83b72','#8a7300'];
+const C={teal:'#007f73',amber:'#d55e00',navy:'#7751a8',red:'#b83b72',grid:'#edf1f4'},palette=['#007f73','#d55e00','#7751a8','#0072b2','#b83b72','#8a7300'];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=s=>s?s.split('-').reverse().join('/'):'—',money=n=>Number.isFinite(n)?'$ '+F.format(n/1e6)+' M':'—',percent=n=>Number.isFinite(n)?F.format(n)+' %':'—',signed=n=>(n>0?'+':'')+F.format(n),month=m=>{const x=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];return x[Number(m.slice(5))-1]+' '+m.slice(2,4);};
 const charts=new Map();let raw,rows=[],model,state={instrument:'BONOS',channel:'Primario bursátil',asof:'',windowDays:30,rate:'tea_pct',group:'all'},moneyField='nominal';
@@ -21,26 +21,11 @@ function syncControls(resetDate=false){
  document.querySelectorAll('[data-instrument]').forEach(b=>{const on=b.dataset.instrument===state.instrument;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',on);});
  render();
 }
-function spark(id,values,color,type='line'){chart(id,{animation:false,grid:{left:1,right:1,top:2,bottom:1},xAxis:{type:'category',show:false,data:values.map((_,i)=>i)},yAxis:{type:'value',show:false,scale:true},tooltip:{show:false},series:[{type,data:values,symbol:'none',lineStyle:{width:1.5,color},itemStyle:{color},areaStyle:type==='line'?{color,opacity:.06}:undefined,barMaxWidth:9,connectNulls:false}]});}
 function render(){
- model=analyze(rows,state);const a=model,w=state.windowDays,secondary=state.channel==='Secundario bursátil';
+ model=analyze(rows,state);const a=model,secondary=state.channel==='Secundario bursátil';
  $('cutoff').textContent='Fuente disponible hasta '+date(sourceCut());$('source-range').textContent=NAMES[state.instrument]+' · última operación '+date(a.last);
  $('scope').textContent=state.channel==='Colocación directa'?'Colocaciones directas publicadas por BVQ. Sin identificación del comprador.':(secondary?'Reventas de títulos existentes. ':'Primeras colocaciones bursátiles. ')+'Histórico nacional de Guayaquil (2019–2024) y de Quito (desde 2025).';
  const stale=a.last&&a.last<model.from;$('stale').hidden=!stale;$('stale-text').textContent=`No hay registros de ${NAMES[state.instrument]} en la ventana reciente al ${date(state.asof)}. Su última operación en este canal fue el ${date(a.last)}. La fecha de análisis permanece en el corte elegido.`;
- $('kpi-period').textContent=`Año ${state.asof.slice(0,4)} al ${date(state.asof)}`;
- $('volume-label').textContent=secondary?'Nominal negociado del año':'Colocación nominal del año';$('ytd').textContent=a.ytd.length?money(a.nominalYtd):'—';
- $('yoy').innerHTML=a.yoy===null?'Sin base interanual comparable':`<b>${signed(a.yoy)} %</b> frente al mismo corte anterior`;
- $('yoy').title=`Ventanas comparadas: ${date(a.currentCompareStart)} a ${date(state.asof)} frente a ${date(a.compareStart)} a ${date(state.asof.replace(state.asof.slice(0,4),String(Number(state.asof.slice(0,4))-1)))}. La comparación ajusta el inicio si el primer año tiene cobertura parcial.`;
- $('rate-label').textContent=rateName()+` · últimos ${w} días`;$('recent-rate').textContent=percent(a.rate);
- const delta=a.rate!==null&&a.prevRate!==null?(a.rate-a.prevRate)*100:null;
- $('rate-delta').innerHTML=delta===null?'Sin comparación de tasas disponible':`<b class="${delta>0?'up':''}">${signed(delta)} pb</b> frente a la ventana anterior`;
- $('rate-delta').title='Promedio ponderado por nominal; el cambio puede reflejar una composición distinta de plazos o decretos. Ver comparación por tramo.';
- const years=state.instrument==='BONOS';$('tenor').innerHTML=a.days!==null?F.format(years?a.days/365:a.days)+` <small>${years?'años':'días'}</small>`:'—';
- $('tenor-note').textContent=`Ponderado por nominal · ${I.format(a.current.validN)} registros válidos`;
- $('recent-label').textContent=`Nominal de los últimos ${w} días`;$('recent-volume').textContent=a.current.n?money(a.recentNominal):'—';
- $('recent-count').textContent=`${I.format(a.current.n)} registros · ${new Set(a.current.rows.map(r=>r.date)).size} días con datos válidos`;
- $('sample-meter').innerHTML=Array.from({length:20},(_,i)=>`<i class="${i<Math.min(20,Math.round(a.current.n/5))?'on':''}"></i>`).join('');$('sample-meter').title='Cada bloque representa aproximadamente 5 registros, hasta 100. No es una medida de liquidez.';
- const last=a.monthly.slice(-12);spark('spark-volume',last.map(m=>m.nominal),C.teal,'bar');spark('spark-rate',last.map(m=>m.rate),C.teal);spark('spark-tenor',last.map(m=>m.days),C.muted);
  $('history-title').textContent=secondary?'Volumen negociado, mes a mes':'Colocación, mes a mes';$('history-sub').textContent=`${NAMES[state.instrument]} · ${state.channel.toLowerCase()} · USD millones · ${date(a.first)} a ${date(state.asof)}`;
  $('partial-month').textContent='Último mes hasta '+date(state.asof);$('cumulative-foot').textContent=`${NAMES[state.instrument]} · nominal observado. La cobertura comienza el ${date(a.first)}; un inicio parcial no equivale a un año completo.`;
  renderVolumes();renderCurve();renderRateHistory();renderStructure();renderQuality();
