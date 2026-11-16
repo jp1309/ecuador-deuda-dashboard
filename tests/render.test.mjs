@@ -25,6 +25,16 @@ test('chart rendering and UI state computation across instruments and channels',
  const expected=sourceRows.filter(r=>r.instrument==='BONOS'&&r.channel==='Primario bursátil'&&r.date>=cutoff.slice(0,4)+'-01-01'&&r.date<=cutoff).reduce((s,r)=>s+r.nominal,0);
  assert.equal(element('ytd').textContent,'$ '+new Intl.NumberFormat('es-EC',{maximumFractionDigits:2}).format(expected/1e6)+' M');
  if(process.env.RENDER_DIR){mkdirSync(process.env.RENDER_DIR,{recursive:true});for(const [name,svg] of renders)writeFileSync(process.env.RENDER_DIR+'/'+name+'.svg',svg);}
+ // Both sets of controls must drive the same date ranges, including year boundaries.
+ element('curve-asof').value='2025-04-01';element('curve-asof').handlers.change();
+ element('curve-window').value='90';element('curve-window').handlers.change();
+ assert.equal(element('asof').value,'2025-04-01');
+ assert.equal(element('window').value,'90');
+ assert.equal(element('curve-current-range').textContent,'02/01/2025 al 01/04/2025');
+ assert.equal(element('curve-previous-range').textContent,'04/10/2024 al 01/01/2025');
+ assert.equal(element('curve-previous-sample').textContent,'Sin registros en el período');
+ element('window').value='30';element('window').handlers.change();
+ assert.equal(element('curve-window').value,'30');
  for(const channel of ['Primario bursátil','Secundario bursátil','Colocación directa']){
   element('channel').value=channel;element('channel').handlers.change();
   for(const button of buttons){button.handlers.click();assert.notEqual(element('updated').textContent,'Carga incompleta',element('error').textContent);assert.ok(element('ytd').textContent.length);}
