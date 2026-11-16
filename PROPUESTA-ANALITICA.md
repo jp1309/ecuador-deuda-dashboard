@@ -34,9 +34,9 @@ El diseño separa cantidades de tasas en gráficos distintos, mantiene colores c
 
 ### Universo y fecha de corte
 
-El corte inicial se toma de la fuente: bonos históricos, CETES/Notas históricos o colocaciones directas. **No se desplaza al último registro del instrumento seleccionado.** Por ejemplo, al 13 de noviembre de 2026, los CETES primarios no tienen operaciones recientes; su última operación es del 5 de febrero. Eso se muestra como ausencia de observaciones recientes y se ofrece un botón explícito para explorar esa fecha.
+El corte inicial se toma de la fuente: bonos históricos, CETES/Notas históricos o colocaciones directas. **No se desplaza al último registro de la serie seleccionada.** CETES y Notas del Tesoro se agrupan en una misma serie histórica: el cambio de denominación no se interpreta como una interrupción de actividad. Si la serie conjunta no tiene observaciones recientes, se muestra el vacío y se ofrece un botón explícito para explorar su última fecha.
 
-Se conserva CETES separado de Notas del Tesoro. La historia de cada selección comienza en su primer registro, que no prueba cobertura previa. Los canales no se suman por posibles coincidencias. El filtro de bonos «Contienen JUB» sólo evalúa el texto del decreto; no adjudica características legales o contractuales a esos títulos.
+Para el seguimiento solicitado, CETES / Notas del Tesoro constituye una única familia analítica. Se suman ambas denominaciones dentro de cada canal y período, sin duplicar registros ni reescribir el campo original. La agrupación se aplica a montos, tasas ponderadas, curvas, acumulados, plazos y exportación de agregados. Esta continuidad analítica no recalcula las condiciones contractuales ni las bases de tasa publicadas. La historia de cada selección comienza en su primer registro, que no prueba cobertura previa. Los canales no se suman por posibles coincidencias. El filtro de bonos «Contienen JUB» sólo evalúa el texto del decreto; no adjudica características legales o contractuales a esos títulos.
 
 ### Períodos comparables
 

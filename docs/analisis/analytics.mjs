@@ -1,5 +1,8 @@
 export const CHANNELS=['Primario bursátil','Colocación directa','Secundario bursátil'];
-export const NAMES={BONOS:'Bonos del Estado',CETES:'CETES',NOTAS:'Notas del Tesoro'};
+export const NAMES={BONOS:'Bonos del Estado',TESORO:'CETES / Notas del Tesoro',CETES:'CETES',NOTAS:'Notas del Tesoro'};
+// Analytical continuity across source denominations; never overwrite the original instrument.
+export const instrumentGroup=instrument=>['CETES','NOTAS'].includes(instrument)?'TESORO':instrument;
+export const matchesInstrument=(original,selected)=>selected==='all'||original===selected||instrumentGroup(original)===selected;
 export const BOND_BUCKETS=[{label:'≤ 1 año',max:365},{label:'1–3 años',max:1095},{label:'3–5 años',max:1825},{label:'5–7 años',max:2555},{label:'7–10 años',max:3650},{label:'> 10 años',max:Infinity}];
 export const SHORT_BUCKETS=[{label:'≤ 90 días',max:90},{label:'91–180 días',max:180},{label:'181–270 días',max:270},{label:'271–365 días',max:365},{label:'> 365 días',max:Infinity}];
 export const sum=(rows,key='nominal')=>rows.reduce((s,r)=>s+(Number.isFinite(r[key])?r[key]:0),0);
@@ -23,7 +26,7 @@ export function cumulative(rows,asof){
 }
 export function analyze(all,state){
  const {instrument,channel,asof,windowDays,rate,group}=state,buckets=instrument==='BONOS'?BOND_BUCKETS:SHORT_BUCKETS;
- const universe=all.filter(r=>r.instrument===instrument&&r.channel===channel&&(!group||group==='all'||(group==='jub'?/JUB/i.test(r.decree||''):!/JUB/i.test(r.decree||''))));
+ const universe=all.filter(r=>matchesInstrument(r.instrument,instrument)&&r.channel===channel&&(!group||group==='all'||(group==='jub'?/JUB/i.test(r.decree||''):!/JUB/i.test(r.decree||''))));
  const rows=universe.filter(r=>r.date<=asof),dates=universe.map(r=>r.date).sort();const first=dates[0],last=dates.at(-1);
  const from=shift(asof,1-windowDays),prevTo=shift(from,-1),prevFrom=shift(prevTo,1-windowDays);
  const current=curve(rows,from,asof,rate,buckets),previous=curve(rows,prevFrom,prevTo,rate,buckets);

@@ -7,7 +7,7 @@ La actualización es técnicamente viable: ambas páginas de BVQ publican enlace
 | Fuente | Contenido | Tratamiento |
 |---|---|---|
 | `bonos.xls` | Hojas 2025 y 2026, fecha de negociación, decreto, precio, rendimiento, interés, TIR/TEA, nominal original, nominal, efectivo, plazo por vencer, emisión, vencimiento, procedencia y mercado | Primario y secundario separados; nominal actual como base de agregación |
-| `cetes.xls` | Hojas 2025 y 2026 con CETES y Notas del Tesoro, emisor, condiciones y mercado | Separar CETES de NOTAS mediante el título, nunca por el nombre del archivo |
+| `cetes.xls` | Hojas 2025 y 2026 con CETES y Notas del Tesoro, emisor, condiciones y mercado | Identificar la denominación original mediante el título y agrupar CETES / Notas del Tesoro para las series históricas |
 | `negociaciones-sector-publico.xlsx` | Colocaciones directas de bonos, CETES/Notas; además reporto y certificado de inversión BanEcuador | Mostrar directas separadamente; excluir las otras dos clases de los indicadores |
 | `montos-negociados-mensuales.xls` | Participación por entidad pública y región del mes publicado | Contexto institucional independiente |
 | `montos-negociados-acumulados.xls` | Participación por entidad pública y región del período acumulado | Contexto independiente, no sumar con el mes |
@@ -17,7 +17,7 @@ Los históricos contienen códigos de procedencia Q y G, presentados como Quito 
 ## Hallazgos de la carga inicial (15 de noviembre de 2026)
 
 - Bonos: 16.585 registros, del 6 de enero de 2025 al 13 de noviembre de 2026.
-- CETES/Notas bursátiles: 2.081 registros, con la misma cobertura temporal. En 2026 hay 72 registros CETES y 1.064 Notas; ignorar las Notas perdería gran parte de la actividad publicada de corto plazo.
+- CETES/Notas bursátiles: 2.081 registros, con la misma cobertura temporal. En 2026 hay 72 registros bajo la denominación CETES y 1.064 bajo Notas; ambos integran la serie continua CETES / Notas del Tesoro.
 - Colocaciones directas: 1.342 registros elegibles, del 12 de febrero de 2021 al 28 de octubre de 2026. Bonos directos comienzan el 11 de diciembre de 2023; el histórico 2021 corresponde a CETES.
 - Reportes institucionales: octubre de 2026 y enero–octubre de 2026. Se conciliaron los totales nacionales con la suma de las entidades y Quito más Guayaquil.
 - Total de filas elegibles en la base: 20.008. **Este conteo suma registros de fuentes, no operaciones únicas ni financiamiento consolidado.**

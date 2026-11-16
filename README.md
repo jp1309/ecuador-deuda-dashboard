@@ -8,7 +8,7 @@ Dashboard de **colocación primaria bursátil, colocación directa y negociació
 
 La nueva propuesta prioriza series históricas, comparación interanual al mismo corte, curvas observadas por plazo, cambios de tasas en puntos básicos, mapas de calor y composición de vencimientos. [Criterios de diseño y metodología analítica](PROPUESTA-ANALITICA.md).
 
-Los canales se muestran por separado. No se publica un total consolidado de financiamiento ni un saldo de deuda: las fuentes tienen distinta cobertura y posibles coincidencias. [Metodología y hallazgos](METODOLOGIA.md).
+CETES y Notas del Tesoro se muestran como una serie histórica continua; la denominación original permanece en la base y en el detalle. Los canales se muestran por separado. No se publica un total consolidado de financiamiento ni un saldo de deuda: las fuentes tienen distinta cobertura y posibles coincidencias. [Metodología y hallazgos](METODOLOGIA.md).
 
 ## Uso
 

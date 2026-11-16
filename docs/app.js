@@ -1,8 +1,9 @@
+import {instrumentGroup,matchesInstrument} from './analisis/analytics.mjs';
 const $=id=>document.getElementById(id);
 const fmt=new Intl.NumberFormat('es-EC',{maximumFractionDigits:2});
 const int=new Intl.NumberFormat('es-EC',{maximumFractionDigits:0});
-const colors={BONOS:'#174e61',CETES:'#77b9a5',NOTAS:'#d2a347'};
-const names={BONOS:'Bonos del Estado',CETES:'CETES',NOTAS:'Notas del Tesoro'};
+const colors={BONOS:'#174e61',TESORO:'#77b9a5'};
+const names={BONOS:'Bonos del Estado',TESORO:'CETES / Notas del Tesoro'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pretty=d=>d?d.split('-').reverse().join('/'):'No disponible';
 const money=n=>'$ '+fmt.format(n/1e6)+' M';
@@ -24,11 +25,11 @@ function selectChannel(next){
 }
 function render(){
  const from=$('from').value,to=$('to').value,instrument=$('instrument').value,origin=$('origin').value;
- filtered=records.filter(r=>r.channel===channel&&(!from||r.date>=from)&&(!to||r.date<=to)&&(instrument==='all'||r.instrument===instrument)&&(origin==='all'||r.origin===origin));
+ filtered=records.filter(r=>r.channel===channel&&(!from||r.date>=from)&&(!to||r.date<=to)&&matchesInstrument(r.instrument,instrument)&&(origin==='all'||r.origin===origin));
  const secondary=channel==='Secundario bursátil';
  $('nominal-label').textContent=secondary?'Nominal negociado':'Colocación nominal';$('chart-title').textContent=secondary?'Negociación nominal':'Colocación nominal';
  $('scope').textContent=channel==='Colocación directa'?'Colocaciones directas reportadas por BVQ. El archivo no identifica compradores. Se presentan por separado del mercado bursátil por posible solapamiento.':secondary?'Transferencias de títulos existentes: este monto mide actividad del mercado secundario y no representa nuevo financiamiento para el emisor.':'Registros identificados como PRIMARIO en los históricos de BVQ, con procedencias Q y G. Cobertura observada; no equivale a toda la emisión nacional ni al financiamiento neto.';
- const available=records.filter(r=>r.channel===channel&&(instrument==='all'||r.instrument===instrument));
+ const available=records.filter(r=>r.channel===channel&&matchesInstrument(r.instrument,instrument));
  const dates=available.map(r=>r.date).sort();
  $('period-note').textContent=from&&to&&from>to?'El inicio debe ser anterior al final del período.':`Cobertura disponible de este canal: ${pretty(dates[0])} a ${pretty(dates.at(-1))}. Período seleccionado: ${pretty(from)} a ${pretty(to)}. Las cifras incluyen alertas de origen.`;
  $('nominal').textContent=filtered.length?money(sum(filtered,'nominal')):'—';$('effective').textContent=filtered.length?money(sum(filtered,'effective')):'—';$('yield').textContent=pct(weighted(filtered,'yield_pct'));$('count').textContent=int.format(filtered.length);
@@ -39,17 +40,17 @@ function renderMonthly(){
  if(!filtered.length){$('monthly').innerHTML='<div class="empty">No hay registros para esta selección.</div>';return;}
  const groups=new Map();let begin=($('from').value||filtered[0].date).slice(0,7),end=($('to').value||filtered.at(-1).date).slice(0,7);
  let cursor=new Date(begin+'-01T00:00:00Z');let limit=0;
- while(cursor.toISOString().slice(0,7)<=end&&limit++<1200){groups.set(cursor.toISOString().slice(0,7),{BONOS:0,CETES:0,NOTAS:0});cursor.setUTCMonth(cursor.getUTCMonth()+1);}
- for(const r of filtered){const key=r.date.slice(0,7);if(!groups.has(key))groups.set(key,{BONOS:0,CETES:0,NOTAS:0});groups.get(key)[r.instrument]+=r.nominal/1e6;}
+ while(cursor.toISOString().slice(0,7)<=end&&limit++<1200){groups.set(cursor.toISOString().slice(0,7),{BONOS:0,TESORO:0});cursor.setUTCMonth(cursor.getUTCMonth()+1);}
+ for(const r of filtered){const key=r.date.slice(0,7);if(!groups.has(key))groups.set(key,{BONOS:0,TESORO:0});groups.get(key)[instrumentGroup(r.instrument)]+=r.nominal/1e6;}
  const entries=[...groups].sort(),W=700,H=250,L=47,R=12,T=15,B=40,w=W-L-R,h=H-T-B;
  const max=Math.max(...entries.map(([,v])=>Object.values(v).reduce((a,b)=>a+b,0)),1)*1.15;
  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Montos nominales mensuales, millones de dólares"><title>Montos nominales mensuales. Los valores exactos están disponibles en el CSV.</title>`;
  for(let i=0;i<=4;i++){const y=T+h-i*h/4;svg+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#e7ede9"/><text x="${L-8}" y="${y+4}" text-anchor="end" fill="#60747b" font-size="10">${fmt.format(max*i/4)}</text>`;}
  const slot=w/entries.length,bw=Math.min(35,slot*.64),every=Math.max(1,Math.ceil(entries.length/12));
- entries.forEach(([month,v],idx)=>{let y=T+h;for(const key of ['BONOS','CETES','NOTAS']){const bh=v[key]/max*h;y-=bh;svg+=`<rect x="${L+slot*(idx+.5)-bw/2}" y="${y}" width="${bw}" height="${bh}" fill="${colors[key]}"><title>${month} · ${names[key]}: ${fmt.format(v[key])} millones USD</title></rect>`;}if(idx%every===0){const label=entries.length>12?month.slice(2):['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][Number(month.slice(5))-1];svg+=`<text x="${L+slot*(idx+.5)}" y="${H-17}" text-anchor="middle" fill="#60747b" font-size="10">${label}</text>`;}});
+ entries.forEach(([month,v],idx)=>{let y=T+h;for(const key of ['BONOS','TESORO']){const bh=v[key]/max*h;y-=bh;svg+=`<rect x="${L+slot*(idx+.5)-bw/2}" y="${y}" width="${bw}" height="${bh}" fill="${colors[key]}"><title>${month} · ${names[key]}: ${fmt.format(v[key])} millones USD</title></rect>`;}if(idx%every===0){const label=entries.length>12?month.slice(2):['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][Number(month.slice(5))-1];svg+=`<text x="${L+slot*(idx+.5)}" y="${H-17}" text-anchor="middle" fill="#60747b" font-size="10">${label}</text>`;}});
  $('monthly').innerHTML=svg+'</svg>';
 }
-function renderMix(){const total=sum(filtered,'nominal');$('mix').innerHTML=Object.keys(colors).map(key=>{const rows=filtered.filter(r=>r.instrument===key),value=sum(rows,'nominal');return `<div class="mix-row"><div class="mix-title"><span>${names[key]}</span><strong>${rows.length?money(value):'Sin registros'}</strong></div><div class="track"><div class="fill" style="background:${colors[key]};width:${total?100*value/total:0}%"></div></div><div class="mix-stats"><span>${rows.length?fmt.format(value/total*100)+' % del nominal':'—'}</span><span>Rend. ${pct(weighted(rows,'yield_pct'))}</span></div></div>`;}).join('');}
+function renderMix(){const total=sum(filtered,'nominal');$('mix').innerHTML=Object.keys(colors).map(key=>{const rows=filtered.filter(r=>matchesInstrument(r.instrument,key)),value=sum(rows,'nominal');return `<div class="mix-row"><div class="mix-title"><span>${names[key]}</span><strong>${rows.length?money(value):'Sin registros'}</strong></div><div class="track"><div class="fill" style="background:${colors[key]};width:${total?100*value/total:0}%"></div></div><div class="mix-stats"><span>${rows.length?fmt.format(value/total*100)+' % del nominal':'—'}</span><span>Rend. ${pct(weighted(rows,'yield_pct'))}</span></div></div>`;}).join('');}
 function renderTable(){
  const query=$('search').value.toLowerCase();tableRows=filtered.filter(r=>(!$('only-flags').checked||r.flags.length)&&(!query||[r.date,r.issuer,r.decree,r.instrument,r.sheet].join(' ').toLowerCase().includes(query))).sort((a,b)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id));
  const pages=Math.max(1,Math.ceil(tableRows.length/25));page=Math.min(page,pages-1);$('page').textContent=`${page+1} / ${pages}`;$('prev').disabled=page===0;$('next').disabled=page===pages-1;$('table-count').textContent=int.format(tableRows.length)+' registros en la tabla';

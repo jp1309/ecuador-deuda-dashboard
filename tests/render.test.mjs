@@ -8,7 +8,7 @@ engine.setPlatformAPI({createCanvas:()=>({getContext:()=>null})});
 const data=JSON.parse(readFileSync(new URL('../docs/data/dashboard.json',import.meta.url),'utf8'));
 const elements=new Map(),renders=new Map(),instances=new Map();
 function element(id){if(!elements.has(id))elements.set(id,{id,value:'',innerHTML:'',textContent:'',hidden:false,options:[{},{}],checked:true,dataset:{},handlers:{},classList:{toggle(){}},setAttribute(){},addEventListener(event,fn){this.handlers[event]=fn;}});return elements.get(id);}
-const buttons=['BONOS','CETES','NOTAS'].map(instrument=>{const el=element('button-'+instrument);el.dataset.instrument=instrument;return el;});
+const buttons=['BONOS','TESORO'].map(instrument=>{const el=element('button-'+instrument);el.dataset.instrument=instrument;return el;});
 const moneyButtons=['nominal','effective'].map(money=>{const el=element('money-'+money);el.dataset.money=money;return el;});
 globalThis.document={getElementById:element,querySelectorAll:selector=>selector==='[data-instrument]'?buttons:selector==='[data-money]'?moneyButtons:[]};
 globalThis.IntersectionObserver=class{observe(){}};
@@ -32,7 +32,7 @@ test('chart rendering and UI state computation across instruments and channels',
  // A sparse source can yield an observed plot or a transparent empty-state, never a manufactured line.
  assert.ok(renders.has('curve-chart')||element('curve-chart').innerHTML.includes('No hay operaciones'));
  element('channel').value='Primario bursátil';element('channel').handlers.change();buttons[1].handlers.click();
- const ceteDates=sourceRows.filter(r=>r.instrument==='CETES'&&r.channel==='Primario bursátil').map(r=>r.date).sort();
+ const ceteDates=sourceRows.filter(r=>['CETES','NOTAS'].includes(r.instrument)&&r.channel==='Primario bursátil').map(r=>r.date).sort();
  const ceteCut=data.sources.find(s=>s.file==='cetes.xls').last_date;
  const gap=(new Date(ceteCut)-new Date(ceteDates.at(-1)))/86400000;
  assert.equal(element('stale').hidden,gap<30);
