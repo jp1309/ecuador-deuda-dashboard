@@ -40,6 +40,25 @@ class PipelineTests(unittest.TestCase):
                 actual=sum(r['nominal'] for r in selected if r['channel']=='Primario bursátil')
                 self.assertAlmostEqual(expected,actual,places=2)
 
+    def test_bvg_coverage_and_source_boundary(self):
+        archive = [r for r in self.rows if r['source'] in p.ARCHIVES]
+        self.assertEqual(Counter((r['instrument'], r['channel']) for r in archive), {
+            ('BONOS', 'Primario bursátil'): 868,
+            ('BONOS', 'Secundario bursátil'): 23803,
+            ('CETES', 'Primario bursátil'): 4699,
+            ('CETES', 'Secundario bursátil'): 527,
+            ('NOTAS', 'Primario bursátil'): 10,
+        })
+        self.assertTrue(all('2019-01-01' <= r['date'] < '2025-01-01' for r in archive))
+        self.assertEqual({r['origin'] for r in archive}, {'Q','G'})
+        self.assertTrue(all(r['date'] >= '2025-01-01' for r in self.rows
+                            if r['source'] in ('bonos.xls','cetes.xls')))
+        first = next(r for r in archive if r['source'] == 'BVG_Cetes.xlsx' and r['row'] == 4)
+        self.assertEqual((first['date'], first['maturity'], first['days']),
+                         ('2019-01-02','2019-12-27',359))
+        self.assertEqual(first['yield_pct'], 3)
+        self.assertAlmostEqual(first['tea_pct'], 3.000123775186)
+
     def test_direct_percent_units_and_exclusions(self):
         rows=[r for r in self.rows if r['channel']=='Colocación directa']
         first=next(r for r in rows if r['sheet']=='Reporte bolsas hist bonos' and r['row']==12)

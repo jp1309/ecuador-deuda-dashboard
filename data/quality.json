@@ -1,10 +1,10 @@
 {
   "flag_counts": {
-    "Fila idéntica en fuente; conservada": 2549,
+    "Fila idéntica en fuente; conservada": 8932,
     "Posible coincidencia entre fuentes": 45,
-    "Emisión posterior a negociación": 10,
+    "Emisión posterior a negociación": 41,
+    "Efectivo no coincide con nominal × precio": 1035,
     "Vencimiento anterior a negociación": 12,
-    "Efectivo no coincide con nominal × precio": 198,
     "Fecha emisión inválida en fuente: 1+": 1
   },
   "possible_overlap_groups": 19,

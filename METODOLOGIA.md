@@ -6,6 +6,7 @@ La actualización es técnicamente viable: ambas páginas de BVQ publican enlace
 
 | Fuente | Contenido | Tratamiento |
 |---|---|---|
+| `BVG_BonosDelEstado.xlsx` y `BVG_Cetes.xlsx` | Operaciones nacionales de ambas bolsas, con precio, montos, plazos, vencimiento y rendimientos nominal y efectivo | Archivo fijo de 2019–2024: 24.671 registros de bonos y 5.236 de CETES / Notas del Tesoro. Diez registros de 2024 figuran como Notas del Tesoro. Se conserva el título de los bonos en el campo de referencia de emisión. |
 | `bonos.xls` | Hojas 2025 y 2026, fecha de negociación, decreto, precio, rendimiento, interés, TIR/TEA, nominal original, nominal, efectivo, plazo por vencer, emisión, vencimiento, procedencia y mercado | Primario y secundario separados; nominal actual como base de agregación |
 | `cetes.xls` | Hojas 2025 y 2026 con CETES y Notas del Tesoro, emisor, condiciones y mercado | Identificar la denominación original mediante el título y agrupar CETES / Notas del Tesoro para las series históricas |
 | `negociaciones-sector-publico.xlsx` | Colocaciones directas de bonos, CETES/Notas; además reporto y certificado de inversión BanEcuador | Mostrar directas separadamente; excluir las otras dos clases de los indicadores |
@@ -13,6 +14,8 @@ La actualización es técnicamente viable: ambas páginas de BVQ publican enlace
 | `montos-negociados-acumulados.xls` | Participación por entidad pública y región del período acumulado | Contexto independiente, no sumar con el mes |
 
 Los históricos contienen códigos de procedencia Q y G, presentados como Quito y Guayaquil. El detalle no tiene comprador ni contraparte ni un identificador único de transacción. El archivo de bonos tampoco contiene una columna de emisor: no se inventa ese dato. Se preserva la denominación original de emisor en los otros archivos.
+
+En la serie bursátil, los archivos de Quito se usan a partir del 1 de enero de 2025. En el archivo de Guayaquil el rendimiento nominal se usa como rendimiento publicado y el efectivo como tasa efectiva publicada. Las definiciones de cada boletín se conservan sin recalcular tasas. El límite por fecha evita combinar las dos publicaciones bursátiles en los años en que coinciden. La colocación directa conserva su propia cobertura.
 
 ## Hallazgos de la carga inicial (15 de noviembre de 2026)
 

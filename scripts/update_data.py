@@ -1,4 +1,4 @@
-"""Download BVQ workbooks, validate them and publish an auditable static dataset."""
+"""Combine current BVQ workbooks with a fixed historical archive from BVG."""
 from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
@@ -6,6 +6,7 @@ from datetime import date, datetime, timezone
 from decimal import Decimal
 import hashlib
 from html.parser import HTMLParser
+from io import BytesIO
 import json
 import math
 from pathlib import Path
@@ -16,6 +17,7 @@ import time
 import unicodedata
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
+from zipfile import ZipFile
 
 import xlrd
 import openpyxl
@@ -27,6 +29,11 @@ PAGES = {k: BASE + 'index.php/estadisticas/boletines-2/' + v for k, v in
 FILES = {'bonos.xls':'historical', 'cetes.xls':'historical',
          'negociaciones-sector-publico.xlsx':'public',
          'montos-negociados-mensuales.xls':'public', 'montos-negociados-acumulados.xls':'public'}
+ARCHIVES = {'BVG_BonosDelEstado.xlsx': 'BONOS', 'BVG_Cetes.xlsx': 'CETES'}
+BVG_BASE = 'https://bolsadevaloresguayaquil.com/'
+BVG_PAGE = BVG_BASE + 'mercados/mayores-transacciones.asp'
+HISTORICAL_START = '2019-01-01'
+BVQ_START = '2025-01-01'
 FIELDS = ['id','source','sheet','row','date','instrument','channel','issuer','decree',
           'nominal','effective','price_pct','yield_pct','tea_pct','coupon_pct','days',
           'issued','maturity','origin','original_nominal','dirty_price_pct','flags']
@@ -103,6 +110,8 @@ def parse_historical(path):
             expected={2:'DECRETO',3:'PRECIO %',4:'RENDIMIENTO %'} if bonds else {2:'EMISOR',4:'PRECIO (%)',5:'RENDIMIENTO (%)'}
             if any(cols.get(k)!=idx for idx,k in expected.items()): raise ValueError('Historical schema changed')
             d['date']=iso(r[cols['FECHA']],mode)
+            if d['date'] and d['date'] < BVQ_START:
+                continue  # Published coverage before 2025 comes from the BVG archive.
             market=norm(r[market_col])
             if market not in ('PRIMARIO','SECUNDARIO'): raise ValueError(f'Unknown market {market}')
             d['channel']='Primario bursátil' if market=='PRIMARIO' else 'Secundario bursátil'
@@ -124,6 +133,63 @@ def parse_historical(path):
                          issued=iso(r[10],mode),maturity=iso(r[11],mode))
             output.append(d)
     return output
+
+
+def bvg_workbook(path):
+    # The official files use one invalid RGB value in their styles. Correct only
+    # that attribute in memory, leaving all cells and the archived file intact.
+    buffer = BytesIO()
+    with ZipFile(path) as source, ZipFile(buffer, 'w') as readable:
+        for name in source.namelist():
+            content = source.read(name)
+            if name == 'xl/styles.xml':
+                content = content.replace(b'rgb="#000000"', b'rgb="FF000000"')
+            readable.writestr(name, content)
+    buffer.seek(0)
+    return openpyxl.load_workbook(buffer, read_only=True, data_only=True)
+
+
+def parse_bvg_archive(path):
+    instrument = ARCHIVES[path.name]
+    markets = {'P': 'Primario bursátil', 'PRIMARIO': 'Primario bursátil',
+               'S': 'Secundario bursátil', 'SECUNDARIO': 'Secundario bursátil'}
+    origins = {'BVQ': 'Q', 'BVG': 'G'}
+    expected = ('FECHA NEGOCIACION', 'TITULO', 'EMISOR', 'PRECIO', 'MERCADO',
+                'TASA', 'PLAZO X VENCER', 'REND. NOMINAL', 'REND. EFECTIVO',
+                'VALOR NOMINAL', 'VALOR EFECTIVO', 'CASA COMPRADORA',
+                'CASA VENDEDORA', 'FECHA DE EMISION', 'FECHA DE VENCIMIENTO', 'BOLSA')
+    records = []
+    book = bvg_workbook(path)
+    try:
+        sheet = book['Base']
+        # Both files declare A1 as their used range despite containing thousands of rows.
+        sheet.reset_dimensions()
+        rows = sheet.iter_rows(min_row=3, max_col=len(expected), values_only=True)
+        if tuple(map(norm, next(rows))) != expected:
+            raise ValueError(f'Unexpected BVG columns in {path.name}')
+        for row_no, values in enumerate(rows, 4):
+            if all(value in ('', None) for value in values):
+                continue
+            traded, title, issuer, price, market, coupon, days, nominal_yield, effective_yield, nominal, effective, _, _, issued, maturity, exchange = values
+            traded = iso(traded)
+            if not traded:
+                raise ValueError(f'Missing BVG date: {path.name}:{row_no}')
+            if not HISTORICAL_START <= traded < BVQ_START:
+                continue
+            row = record(path.name, sheet.title, row_no)
+            row.update(date=traded, instrument='NOTAS' if instrument == 'CETES' and norm(title) == 'NOTAS DEL TESORO' else instrument,
+                       channel=markets[norm(market)], origin=origins[norm(exchange)], issuer=issuer,
+                       decree=title if instrument == 'BONOS' else None,
+                       price_pct=number(price), coupon_pct=number(coupon), days=number(days),
+                       yield_pct=number(nominal_yield), tea_pct=number(effective_yield),
+                       nominal=number(nominal), effective=number(effective),
+                       issued=optional_date(issued,row,'emisión'), maturity=optional_date(maturity,row,'vencimiento'))
+            records.append(row)
+    finally:
+        book.close()
+    if not records:
+        raise ValueError(f'Empty BVG archive: {path.name}')
+    return records
 
 def parse_direct(path):
     output=[]; excluded=[]
@@ -244,17 +310,26 @@ def download(folder):
 
 def build(folder,meta=None,previous=None):
     records=parse_historical(folder/'bonos.xls')+parse_historical(folder/'cetes.xls')
+    for name in ARCHIVES:
+        records.extend(parse_bvg_archive(folder/name))
     direct,excluded=parse_direct(folder/'negociaciones-sector-publico.xlsx'); records+=direct
     institutions=[]
     for name in ('montos-negociados-mensuales.xls','montos-negociados-acumulados.xls'):
         institutions+=parse_institutions(folder/name)
     quality=validate(records); quality['excluded']=excluded
     sources=[]
-    for name,group in FILES.items():
+    for name in (*FILES, *ARCHIVES):
         selected=[r for r in records if r['source']==name]
         info=(meta or {}).get(name,{})
-        source={'file':name,'page':PAGES[group],
-                'url':info.get('url',BASE+'uploads/estadisticas/boletines/'+('cotizaciones-historicas/' if group=='historical' else 'sector-publico/')+name),
+        if name in ARCHIVES:
+            page = BVG_PAGE
+            url = BVG_BASE + 'boletines/historicos/' + name
+        else:
+            group = FILES[name]
+            page = PAGES[group]
+            url = info.get('url',BASE+'uploads/estadisticas/boletines/'+('cotizaciones-historicas/' if group=='historical' else 'sector-publico/')+name)
+        source={'file':name,'page':page,'url':url,
+                'archive':name in ARCHIVES,
                 'sha256':hashlib.sha256((folder/name).read_bytes()).hexdigest(),
                 'rows':len(selected),'first_date':min((r['date'] for r in selected),default=None),
                 'last_date':max((r['date'] for r in selected),default=None),
@@ -289,14 +364,16 @@ def main():
     incoming=ROOT/'.incoming'; incoming.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(dir=incoming) as temp:
         folder=Path(temp)
+        raw=ROOT/'data/raw'
+        for name in ARCHIVES:
+            shutil.copy2(raw/name,folder/name)
         if args.offline:
             for name in FILES: shutil.copy2(args.offline/name,folder/name)
-            meta=None
+            meta={s['file']:s for s in (previous or {}).get('sources',[])}
         else: meta=download(folder)
         data=build(folder,meta,previous)
         payload=json.dumps(data,ensure_ascii=False,separators=(',',':'),allow_nan=False)
-        # Nothing is published until all five files parse and validations pass.
-        raw=ROOT/'data/raw'; raw.mkdir(parents=True,exist_ok=True)
+        # Publish only after the daily workbooks and fixed archives pass validation.
         for name in FILES: shutil.copy2(folder/name,raw/name)
         tmp=target.with_suffix('.tmp'); tmp.write_text(payload,encoding='utf-8'); tmp.replace(target)
         (ROOT/'data/quality.json').write_text(json.dumps(data['quality'],ensure_ascii=False,indent=2),encoding='utf-8')

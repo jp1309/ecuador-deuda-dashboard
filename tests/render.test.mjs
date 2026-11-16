@@ -26,12 +26,12 @@ test('chart rendering and UI state computation across instruments and channels',
  assert.equal(element('ytd').textContent,'$ '+new Intl.NumberFormat('es-EC',{maximumFractionDigits:2}).format(expected/1e6)+' M');
  if(process.env.RENDER_DIR){mkdirSync(process.env.RENDER_DIR,{recursive:true});for(const [name,svg] of renders)writeFileSync(process.env.RENDER_DIR+'/'+name+'.svg',svg);}
  // Both sets of controls must drive the same date ranges, including year boundaries.
- element('curve-asof').value='2025-04-01';element('curve-asof').handlers.change();
+ element('curve-asof').value='2019-04-01';element('curve-asof').handlers.change();
  element('curve-window').value='90';element('curve-window').handlers.change();
- assert.equal(element('asof').value,'2025-04-01');
+ assert.equal(element('asof').value,'2019-04-01');
  assert.equal(element('window').value,'90');
- assert.equal(element('curve-current-range').textContent,'02/01/2025 al 01/04/2025');
- assert.equal(element('curve-previous-range').textContent,'04/10/2024 al 01/01/2025');
+ assert.equal(element('curve-current-range').textContent,'02/01/2019 al 01/04/2019');
+ assert.equal(element('curve-previous-range').textContent,'04/10/2018 al 01/01/2019');
  assert.equal(element('curve-previous-sample').textContent,'Sin registros en el período');
  element('window').value='30';element('window').handlers.change();
  assert.equal(element('curve-window').value,'30');
@@ -47,6 +47,9 @@ test('chart rendering and UI state computation across instruments and channels',
  const gap=(new Date(ceteCut)-new Date(ceteDates.at(-1)))/86400000;
  assert.equal(element('stale').hidden,gap<30);
  if(gap>=30){assert.equal(element('recent-rate').textContent,'—');element('last-date').handlers.click();assert.equal(element('stale').hidden,true);}
- element('asof').value='2020-01-01';element('asof').handlers.change();assert.ok(element('volume-chart').innerHTML.includes('Sin registros'));
+ element('curve-asof').value='2020-12-31';element('curve-asof').handlers.change();
+ assert.ok(renders.has('curve-chart'));
+ assert.match(element('curve-current-sample').textContent,/registros? v.lidos?/);
+ element('asof').value='2018-01-01';element('asof').handlers.change();assert.ok(element('volume-chart').innerHTML.includes('Sin registros'));
  for(const c of instances.values())c.dispose();
 });

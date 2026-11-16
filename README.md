@@ -1,6 +1,6 @@
 # Observatorio de títulos públicos del Ecuador
 
-Dashboard de **colocación primaria bursátil, colocación directa y negociación secundaria** de bonos del Estado, CETES y Notas del Tesoro, a partir de cinco archivos oficiales de la Bolsa de Valores de Quito.
+Dashboard de **colocación primaria bursátil, colocación directa y negociación secundaria** de bonos del Estado, CETES y Notas del Tesoro, con archivos oficiales de las bolsas de Quito (BVQ) y Guayaquil (BVG).
 
 **Dashboard:** https://jp1309.github.io/ecuador-deuda-dashboard/
 
@@ -41,7 +41,7 @@ python scripts/update_data.py --offline data/raw
 
 GitHub Actions consulta las páginas oficiales y descubre los enlaces a los cinco Excel a las **18:23, hora de Ecuador continental (23:23 UTC)**. También permite ejecución manual en Actions → Actualizar datos y publicar dashboard → Run workflow.
 
-Cada ejecución descarga, valida formatos y esquemas, normaliza unidades, prueba cálculos, registra los originales y publica GitHub Pages. Si una fuente falla, el job falla y conserva la última versión publicada. Consultar diariamente no garantiza que BVQ actualice diariamente los archivos. El dashboard muestra la antigüedad de la consulta y el corte de cada fuente.
+Cada ejecución descarga los cinco archivos de Quito e integra los dos Excel archivados de Guayaquil. Valida formatos y esquemas, normaliza unidades, prueba cálculos, registra los originales y publica GitHub Pages. Si una fuente falla, el job falla y conserva la última versión publicada. Consultar diariamente no garantiza que BVQ actualice diariamente los archivos. El dashboard muestra la antigüedad de la consulta y el corte de cada fuente.
 
 Los originales actuales se guardan en `data/raw`; los cambios quedan en el historial de Git. La base normalizada está en `docs/data/dashboard.json`, con nombres de columnas y filas compactas, y el informe de calidad en `data/quality.json`. No se añaden nuevamente todos los registros en cada descarga: se reconstruye la fotografía vigente. Las hojas anuales retiradas por la fuente se conservan desde la fotografía anterior; una caída de más del 5% de filas o retroceso de fechas detiene la publicación para revisión.
 
@@ -49,6 +49,7 @@ Configurar Settings → Pages → Source → **GitHub Actions**. El workflow nec
 
 ## Fuentes
 
+- Histórico nacional de BVG: [bonos](https://bolsadevaloresguayaquil.com/boletines/historicos/BVG_BonosDelEstado.xlsx) y [CETES](https://bolsadevaloresguayaquil.com/boletines/historicos/BVG_Cetes.xlsx). Se usa el archivo fijo de 2019 a 2024.
 - [Cotizaciones históricas BVQ](https://www.bolsadequito.com/index.php/estadisticas/boletines-2/cotizaciones-historicas): bonos y CETES/Notas.
 - [Sector público BVQ](https://www.bolsadequito.com/index.php/estadisticas/boletines-2/sector-publico): colocaciones directas y montos negociados por institución.
 
