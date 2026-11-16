@@ -4,6 +4,10 @@ Dashboard de **colocación primaria bursátil, colocación directa y negociació
 
 **Dashboard:** https://jp1309.github.io/ecuador-deuda-dashboard/
 
+**Propuesta analítica 02:** https://jp1309.github.io/ecuador-deuda-dashboard/analisis/
+
+La nueva propuesta prioriza series históricas, comparación interanual al mismo corte, curvas observadas por plazo, cambios de tasas en puntos básicos, mapas de calor y composición de vencimientos. [Criterios de diseño y metodología analítica](PROPUESTA-ANALITICA.md).
+
 Los canales se muestran por separado. No se publica un total consolidado de financiamiento ni un saldo de deuda: las fuentes tienen distinta cobertura y posibles coincidencias. [Metodología y hallazgos](METODOLOGIA.md).
 
 ## Uso

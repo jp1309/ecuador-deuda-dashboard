@@ -30,6 +30,11 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar estadísticas de la propuesta analítica
+        run: node --test tests/*.test.mjs
       - run: pip install -r requirements.txt
       - name: Probar importación y cálculos
         run: python -m unittest discover -s tests -v
