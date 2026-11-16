@@ -2,7 +2,7 @@ import {instrumentGroup,matchesInstrument} from './analisis/analytics.mjs';
 const $=id=>document.getElementById(id);
 const fmt=new Intl.NumberFormat('es-EC',{maximumFractionDigits:2});
 const int=new Intl.NumberFormat('es-EC',{maximumFractionDigits:0});
-const colors={BONOS:'#174e61',TESORO:'#77b9a5'};
+const colors={BONOS:'#007f73',TESORO:'#d55e00'};
 const names={BONOS:'Bonos del Estado',TESORO:'CETES / Notas del Tesoro'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pretty=d=>d?d.split('-').reverse().join('/'):'No disponible';
